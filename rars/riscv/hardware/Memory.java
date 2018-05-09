@@ -193,7 +193,7 @@ public class Memory extends Observable {
     // have unsigned types.  As long as the absolute address is correctly translated
     // into a table offset, this is of no concern.
 
-    private static final int MMIO_TABLE_LENGTH = 16; // Each entry of table points to a 4K block.
+    private static final int MMIO_TABLE_LENGTH = 1024; //16; // Each entry of table points to a 4K block.
     private int[][] memoryMapBlockTable;
 
     // I use a similar scheme for storing instructions.  MIPS text segment ranges from

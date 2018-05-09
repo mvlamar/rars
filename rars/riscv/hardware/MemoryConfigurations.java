@@ -85,7 +85,7 @@ public class MemoryConfigurations {
             0x7ffffffc, // stack base address
             0x7fffffff, // highest address in user space
             0x80000000, // lowest address in kernel space
-            0xffff0000, // MMIO base address
+            0xff000000, // MMIO base address
             0xffffffff, // highest address in kernel (and memory)
             0x7fffffff, // data segment limit address
             0x0ffffffc, // text limit address

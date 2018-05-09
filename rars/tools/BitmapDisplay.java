@@ -68,10 +68,10 @@ public class BitmapDisplay extends AbstractToolAndApplication {
     private static final int defaultVisualizationUnitPixelWidthIndex = 0;
     private static final String[] visualizationUnitPixelHeightChoices = {"1", "2", "4", "8", "16", "32"};
     private static final int defaultVisualizationUnitPixelHeightIndex = 0;
-    private static final String[] displayAreaPixelWidthChoices = {"64", "128", "256", "512", "1024"};
+    private static final String[] displayAreaPixelWidthChoices = {"64", "128", "256", "320","512","640","800", "1024"};
     private static final int defaultDisplayWidthIndex = 3;
-    private static final String[] displayAreaPixelHeightChoices = {"64", "128", "256", "512", "1024"};
-    private static final int defaultDisplayHeightIndex = 2;
+    private static final String[] displayAreaPixelHeightChoices = {"64", "128", "256", "240","480","512","600","768", "1024"};
+    private static final int defaultDisplayHeightIndex = 3;
 
     // Values for display canvas.  Note their initialization uses the identifiers just above.
 
@@ -414,7 +414,7 @@ public class BitmapDisplay extends AbstractToolAndApplication {
         for (int i = 0; i < displayBaseAddressChoices.length; i++) {
             displayBaseAddressChoices[i] = rars.util.Binary.intToHexString(displayBaseAddressArray[i]) + descriptions[i];
         }
-        defaultBaseAddressIndex = 2;  // default to 0x10010000 (static data)
+        defaultBaseAddressIndex = 4;  // default 0xff000000 //default to 0x10010000 (static data)
         baseAddress = displayBaseAddressArray[defaultBaseAddressIndex];
     }
 
@@ -467,17 +467,159 @@ public class BitmapDisplay extends AbstractToolAndApplication {
     }
 
     // Given memory address, update color for the corresponding grid element.
-    private void updateColorForAddress(MemoryAccessNotice notice) {
-        int address = notice.getAddress();
-        int value = notice.getValue();
-        int offset = (address - baseAddress) / Memory.WORD_LENGTH_BYTES;
-        try {
-            theGrid.setElement(offset / theGrid.getColumns(), offset % theGrid.getColumns(), value);
-        } catch (IndexOutOfBoundsException e) {
-            // If address is out of range for display, do nothing.
-        }
-    }
+//    private void updateColorForAddress(MemoryAccessNotice notice) {
+//        int address = notice.getAddress();
+//        int value = notice.getValue();
+//        int offset = (address - baseAddress) / Memory.WORD_LENGTH_BYTES;
+//        try {
+//            theGrid.setElement(offset / theGrid.getColumns(), offset % theGrid.getColumns(), value);
+//        } catch (IndexOutOfBoundsException e) {
+//            // If address is out of range for display, do nothing.
+//        }
+//    }
+       private void updateColorForAddress(MemoryAccessNotice notice) {
+    	 //int redMask = 0x07, blueMask = 0xC0, greenMask = 0x38;
+    	 int red, blue, green;
+         int address = notice.getAddress();
+         int value   = notice.getValue();
+         int lenguit = notice.getLength();
+         int value0=0, value1=0, value2=0, value3=0;
+         
+         int transparencia = 0xC7; //1100 0111 => 
+         int redt = (transparencia & 0x07) << 21 | (transparencia & 0x07) << 18 | (transparencia & 0x06) << 16;
+         int greent = (transparencia & 0x38) << 10 | (transparencia & 0x38) << 7 | (transparencia & 0x30) << 5;
+         int bluet = (transparencia & 0xC0) | (transparencia & 0xC0)>>2 | (transparencia & 0xC0)>>4 | (transparencia & 0xC0)>>6 ;
+         int valuet=redt+greent+bluet;
+         
+            
+         //address = baseAddress + (address-baseAddress)*4; //1 pixel 4 bytes
+         address = baseAddress + (address-baseAddress)*4;
+         // BBGG GRRR -> RRR00000 GGG00000 BB000000
+         //red = (value & 0x07) << 21;
+         //green = (value & 0x38) << 10;
+         //blue = (value & 0xC0);
 
+         // BBGG GRRR -> RRR RRR RR GGG GGG GG BB BB BB BB
+         if(lenguit==1) //sb
+         {
+            red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value0=red+green+blue;
+         }
+         else
+         if (lenguit==2) //sh
+         {
+             red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value0=red+green+blue;
+            
+            value=value>>8;
+            
+             red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value1=red+green+blue;
+         }
+         else
+             if(lenguit==4) //sw
+             {     
+             red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value0=red+green+blue;
+            
+            value=value>>8;
+            
+             red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value1=red+green+blue;
+            
+            value=value>>8;
+             red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value2=red+green+blue;
+            
+            value=value>>8;
+             red = (value & 0x07) << 21 | (value & 0x07) << 18 | (value & 0x06) << 16;
+             green = (value & 0x38) << 10 | (value & 0x38) << 7 | (value & 0x30) << 5;
+             blue = (value & 0xC0) | (value & 0xC0)>>2 | (value & 0xC0)>>4 | (value & 0xC0)>>6 ;
+            value3=red+green+blue;
+            
+            }
+         
+         
+//         blue = ((value & 0x80)>>>7)*0xF0 + ((value & 0x40)>>>6)*0x0F;
+ //        green = (((value & 0x20)>>>5)*0xE0 + ((value & 0x10)>>>4)*0x1C + ((value & 0x08)>>>3)*0x03)*256;
+  //       red = (((value & 0x04)>>>2)*0xE0 + ((value & 0x02)>>>1)*0x1C + ((value & 0x01)>>>0)*0x03)*65536;
+         // BBGG GRRR -> 
+           
+         //blue = ((value & 0x80)/0x80)*0xF0 + ((value & 0x40)/0x40)*0x0F;
+         //green = (((value & 0x20)/0x20)*0xE0 + ((value & 0x10)/0x10)*0x1C + ((value & 0x08)/0x08)*0x03)*256;
+         //red = (((value & 0x04)/0x04)*0xE0 + ((value & 0x02)/0x02)*0x1C + ((value & 0x01)*0x03))*65536;
+         
+         //red = ((value & 0x07)*256/3)*65536;
+         //green = (((value & 0x38)>>3)*256/3)*256;
+         //blue = (((value & 0xC0)>>6)*256/2);
+         
+         
+/*         red /= 0x07;
+         blue /= 0xC0;
+         green /= 0x38;
+
+         red = red & 0xFFFFFF;
+         green = green & 0xFFFFFF;
+         blue = blue & 0xFFFFFF;
+         
+         red *= 0xFF0000;
+         green *= 0x00FF00;
+         blue *= 0x0000FF;
+ */
+         
+//         value = red + blue + green;
+         
+         
+         int offset = (address - baseAddress)/Memory.WORD_LENGTH_BYTES;
+         int col=theGrid.getColumns();
+         try {
+             if(lenguit==1)
+             {
+                 if(value0!=valuet)
+                    theGrid.setElement(offset / col, offset % col, value0);
+             }
+             else
+             if(lenguit==2)
+             {
+                 if(value0!=valuet)
+                    theGrid.setElement(offset / col, (offset % col), value0);
+                 
+                 if(value1!=valuet)
+                    theGrid.setElement(offset / col, (offset % col)+1, value1); 
+             }
+             else
+             if(lenguit==4)
+             {
+                   if(value0!=valuet)
+                        theGrid.setElement(offset / col, (offset % col), value0);
+                   
+                   if(value1!=valuet)
+                        theGrid.setElement(offset / col, (offset % col)+1, value1);
+                   
+                   if(value2!=valuet)
+                        theGrid.setElement(offset / col, (offset % col)+2, value2);
+                   
+                   if(value3!=valuet)
+                        theGrid.setElement(offset / col, (offset % col)+3, value3);
+//            theGrid.setElement(offset / theGrid.getColumns(), offset % theGrid.getColumns(), value);
+             }
+         } 
+             catch (IndexOutOfBoundsException e) {
+                 // If address is out of range for display, do nothing.  
+            }
+      }
 
     //////////////////////////////////////////////////////////////////////////////////////
     //  Specialized inner classes for modeling and animation.
